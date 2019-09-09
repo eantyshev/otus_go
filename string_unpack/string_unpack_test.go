@@ -15,4 +15,5 @@ func TestUnpack(t *testing.T) {
 	assert.Equal(t, Unpack(`qwe\\5`), `qwe\\\\\`)
 	assert.Equal(t, Unpack(`\1qwe\\`), `1qwe\`)
 	assert.Equal(t, Unpack(`\12qwe`), `11qwe`)
+	assert.Equal(t, Unpack("ф0fa"), "fa")
 }
