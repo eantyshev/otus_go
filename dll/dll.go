@@ -39,29 +39,29 @@ func (l List) Last() *Item {
 func (l *List) PushFront(v interface{}) {
 	item := Item{}
 	item.value = v
-	item.next = (*l).head
-	if (*l).head != nil {
-		(*l).head.prev = &item
+	item.next = l.head
+	if l.head != nil {
+		l.head.prev = &item
 	}
-	(*l).head = &item
-	if (*l).tail == nil {
-		(*l).tail = &item
+	l.head = &item
+	if l.tail == nil {
+		l.tail = &item
 	}
-	(*l).length++
+	l.length++
 }
 
 func (l *List) PushBack(v interface{}) {
 	item := Item{}
 	item.value = v
 	item.prev = (*l).tail
-	if (*l).tail != nil {
-		(*l).tail.next = &item
+	if l.tail != nil {
+		l.tail.next = &item
 	}
-	(*l).tail = &item
-	if (*l).head == nil {
-		(*l).head = &item
+	l.tail = &item
+	if l.head == nil {
+		l.head = &item
 	}
-	(*l).length++
+	l.length++
 }
 
 func (l *List) Remove(pitem *Item) {
@@ -71,13 +71,13 @@ func (l *List) Remove(pitem *Item) {
 	if pitem.next != nil {
 		pitem.next.prev = pitem.prev
 	}
-	if (*l).head == pitem {
-		(*l).head = pitem.next
+	if l.head == pitem {
+		l.head = pitem.next
 	}
-	if (*l).tail == pitem {
-		(*l).tail = pitem.prev
+	if l.tail == pitem {
+		l.tail = pitem.prev
 	}
-	(*l).length--
+	l.length--
 }
 
 func main() {
