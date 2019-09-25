@@ -53,7 +53,7 @@ func (l *List) PushFront(v interface{}) {
 func (l *List) PushBack(v interface{}) {
 	item := Item{}
 	item.value = v
-	item.prev = (*l).tail
+	item.prev = l.tail
 	if l.tail != nil {
 		l.tail.next = &item
 	}

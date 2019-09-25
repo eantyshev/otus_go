@@ -48,7 +48,7 @@ func TestRemove(t *testing.T) {
 	lst.PushBack(4)
 	// remove from the middle
 	lst.Remove(pitem)
-	assert.Equal(t, (*lst.First()).Value(), 3)
-	assert.Equal(t, (*lst.Last()).Value(), 4)
+	assert.Equal(t, lst.First().Value(), 3)
+	assert.Equal(t, lst.Last().Value(), 4)
 	assert.Equal(t, lst.Len(), 2)
 }
