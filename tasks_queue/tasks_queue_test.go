@@ -35,7 +35,7 @@ func Scenario(t *testing.T, concurrency int, errlimit int,
 	case <-time.After(
 		time.Duration(maxSec)*time.Second +
 			10*time.Millisecond):
-		t.Errorf("Timeout of %d msec exceeded", maxSec)
+		t.Errorf("Timeout of %d sec exceeded", maxSec)
 	}
 }
 
