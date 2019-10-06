@@ -6,9 +6,26 @@ import (
 	"time"
 )
 
+type Task struct {
+	Idx  int
+	Proc func() error
+}
+
 type TaskResult struct {
-	itask  int
-	result error
+	Idx int
+	Res error
+}
+
+func (t Task) GetResult() TaskResult {
+	err := t.Proc()
+	return TaskResult{Idx: t.Idx, Res: err}
+}
+
+func Worker(tasks <-chan Task, resultsChan chan<- TaskResult, wg *sync.WaitGroup) {
+	for task := range tasks {
+		resultsChan <- task.GetResult()
+	}
+	wg.Done()
 }
 
 // Run given tasks with concurrency of N
@@ -17,43 +34,46 @@ type TaskResult struct {
 // errlimit 0 means no limit
 func RunAll(tasks []func() error, N int, errlimit int) int {
 	var wg = &sync.WaitGroup{}
-	var runPool = make(chan struct{}, N)
-	var results = make(chan TaskResult, N)
-	var term = make(chan struct{}, 1)
-	var errcount = make(chan int)
-	go func() {
-		var cnt = 0
-		for r := range results {
-			fmt.Printf("task %d result: %v\n", r.itask, r.result)
-			if r.result != nil {
-				cnt++
-				if cnt == errlimit {
-					term <- struct{}{}
+	var tasksChan = make(chan Task)
+	var resultsChan = make(chan TaskResult, N)
+	var total, failures int
+
+	// start N workers
+	for i := 0; i < N; i++ {
+		wg.Add(1)
+		go Worker(tasksChan, resultsChan, wg)
+	}
+
+loop:
+	for i := range tasks {
+		select {
+		case r := <-resultsChan:
+			fmt.Printf("task %d result: %v\n", r.Idx, r.Res)
+			total++
+			if r.Res != nil {
+				failures++
+				if failures == errlimit {
+					fmt.Println("error limit reached")
+					break loop
 				}
 			}
-			<-runPool
-		}
-		errcount <- cnt
-	}()
-loop:
-	for i, task := range tasks {
-		select {
-		case <-term:
-			fmt.Println("error limit reached, no new tasks")
-			break loop
-		case runPool <- struct{}{}:
+			continue
+		case tasksChan <- Task{i, tasks[i]}:
 			fmt.Printf("Task %d starting...\n", i)
-			wg.Add(1)
-			go func(task func() error, itask int, wg *sync.WaitGroup) {
-				defer wg.Done()
-				results <- TaskResult{itask: itask, result: task()}
-			}(task, i, wg)
 		}
 	}
-	close(runPool) // no new tasks
+	close(tasksChan) // no new tasks
 	wg.Wait()
-	close(results) // no new results
-	return <-errcount
+	close(resultsChan) // no new results
+	// drain the remaining results
+	for r := range resultsChan {
+		fmt.Printf("task %d result: %v\n", r.Idx, r.Res)
+		total++
+		if r.Res != nil {
+			failures++
+		}
+	}
+	return failures
 }
 
 func main() {

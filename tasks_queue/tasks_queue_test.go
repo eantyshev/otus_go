@@ -40,7 +40,7 @@ func Scenario(t *testing.T, concurrency int, errlimit int,
 }
 
 func TestConcurrent1(t *testing.T) {
-	Scenario(t, 2, 0, []int{1, 2, 3, 4}, []bool{true, true, false, true}, 6, 3)
+	Scenario(t, 2, 0, []int{1, 2, 3, 4}, []bool{true, true, false, true}, 5, 3)
 }
 
 func TestErrlimit(t *testing.T) {
@@ -48,7 +48,7 @@ func TestErrlimit(t *testing.T) {
 }
 
 func TestErrlimit2(t *testing.T) {
-	Scenario(t, 2, 1, []int{1, 1, 1, 1}, []bool{true, false, true, true}, 2, 1)
+	Scenario(t, 3, 1, []int{4, 3, 2, 1}, []bool{true, false, true, true}, 4, 2)
 }
 
 func TestConcurrent2(t *testing.T) {
