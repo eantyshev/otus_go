@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func GetReader(from string, offset, limit int64) (r *io.LimitedReader, err error) {
+func getReader(from string, offset, limit int64) (r *io.LimitedReader, err error) {
 	var fInfo os.FileInfo
 	var f *os.File
 	var maxbytes int64
@@ -37,11 +37,11 @@ func GetReader(from string, offset, limit int64) (r *io.LimitedReader, err error
 	return
 }
 
-func CopyData(from, to string, offset, limit int64) error {
+func copyData(from, to string, offset, limit int64) error {
 	var r *io.LimitedReader
 	var w io.Writer
 	var err error
-	if r, err = GetReader(from, offset, limit); err != nil {
+	if r, err = getReader(from, offset, limit); err != nil {
 		return err
 	}
 	if w, err = os.Create(to); err != nil {

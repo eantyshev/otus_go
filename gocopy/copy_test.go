@@ -28,7 +28,7 @@ func Scenario(t *testing.T, content []byte, limit, offset int64, result []byte, 
 	defer os.Remove(from)
 	to := CreateTmpFile(t, []byte{})
 	defer os.Remove(to)
-	err := CopyData(from, to, limit, offset)
+	err := copyData(from, to, limit, offset)
 	if err != nil {
 		if fails {
 			t.Log(err)

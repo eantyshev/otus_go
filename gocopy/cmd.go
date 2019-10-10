@@ -17,7 +17,7 @@ func init() {
 
 func main() {
 	flag.Parse()
-	if err := CopyData(pathFrom, pathTo, offset, limit); err != nil {
+	if err := copyData(pathFrom, pathTo, offset, limit); err != nil {
 		log.Fatalf("Failed to copy: %s", err)
 	}
 }
