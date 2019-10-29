@@ -2,12 +2,13 @@ package appointment
 
 import (
 	"github.com/eantyshev/otus_go/calendar/models"
+	"time"
 )
 
 type Repository interface {
-	//    Fetch(cursor string, num int) ([]*models.Appointment, string, error)
+	Fetch(timeBegin time.Time, num int) ([]*models.Appointment, time.Time, error)
 	GetById(id int64) (*models.Appointment, error)
-	//    Update(ap *models.Appointment) error
+	Update(ap *models.Appointment) error
 	Store(ap *models.Appointment) error
-	//    Delete(id int64) error
+	Delete(id int64) error
 }
