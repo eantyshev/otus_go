@@ -16,7 +16,7 @@ var ap1 = models.Appointment{
 	StartsAt:        time.Date(2019, 10, 29, 17, 0, 0, 0, time.UTC),
 	DurationMinutes: 100,
 	IsRegular:       true,
-	DaysOfWeek:      []models.WeekDay{models.Tuesday, models.Thursday},
+	DaysOfWeek:      []time.Weekday{time.Tuesday, time.Thursday},
 }
 
 var ap2 = models.Appointment{
