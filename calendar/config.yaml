@@ -1,0 +1,3 @@
+http_listen: "[::]:8080"
+log_file: calendar.log
+log_level: debug
