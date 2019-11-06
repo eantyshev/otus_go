@@ -1,12 +1,12 @@
 package repository
 
 import (
+	"github.com/eantyshev/otus_go/calendar/pkg/appointment"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
-	"github.com/eantyshev/otus_go/calendar/appointment"
-	"github.com/eantyshev/otus_go/calendar/models"
+	"github.com/eantyshev/otus_go/calendar/pkg/models"
 )
 
 var ap1 = models.Appointment{

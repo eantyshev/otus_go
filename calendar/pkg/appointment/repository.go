@@ -1,7 +1,7 @@
 package appointment
 
 import (
-	"github.com/eantyshev/otus_go/calendar/models"
+	"github.com/eantyshev/otus_go/calendar/pkg/models"
 	"time"
 )
 

@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	"github.com/eantyshev/otus_go/calendar/pkg/hello"
 	"github.com/spf13/viper"
 
-	"github.com/eantyshev/otus_go/calendar/hello"
 	"github.com/spf13/cobra"
 )
 

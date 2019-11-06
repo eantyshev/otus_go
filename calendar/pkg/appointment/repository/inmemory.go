@@ -1,24 +1,27 @@
 package repository
 
 import (
+	"github.com/eantyshev/otus_go/calendar/pkg/appointment"
 	"time"
+	"sync"
 
-	"github.com/eantyshev/otus_go/calendar/appointment"
-	"github.com/eantyshev/otus_go/calendar/models"
+	"github.com/eantyshev/otus_go/calendar/pkg/models"
 )
 
-type mapRepo map[int64]*models.Appointment
+type mapRepo struct {
+	sync.RWMutex
+	M map[int64]*models.Appointment
+}
 
 func NewMapRepo() appointment.Repository {
-	var r mapRepo = make(map[int64]*models.Appointment)
-	return r
+	return &mapRepo{M: make(map[int64]*models.Appointment)}
 }
 
 func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time.Time, error) {
 	var cnt = 0
 	var aps []*models.Appointment
 	var timeEndMax time.Time
-	for _, ap := range r {
+	for _, ap := range r.M {
 		if ap.StartsAt.After(timeFrom) {
 			aps = append(aps, ap)
 			cnt++
@@ -35,29 +38,37 @@ func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time
 }
 
 func (r mapRepo) Store(ap *models.Appointment) error {
-	if _, ok := r[ap.ID]; ok {
+	r.Lock()
+	defer r.Unlock()
+	if _, ok := r.M[ap.ID]; ok {
 		return models.ErrConflictId
 	}
-	r[ap.ID] = ap
+	r.M[ap.ID] = ap
 	return nil
 }
 
 func (r mapRepo) GetById(id int64) (*models.Appointment, error) {
-	if ap, ok := r[id]; ok {
+	r.RLock()
+	defer r.RUnlock()
+	if ap, ok := r.M[id]; ok {
 		return ap, nil
 	}
 	return nil, models.ErrIdNotFound
 }
 
 func (r mapRepo) Update(ap *models.Appointment) error {
-	r[ap.ID] = ap
+	r.Lock()
+	defer r.Unlock()
+	r.M[ap.ID] = ap
 	return nil
 }
 
 func (r mapRepo) Delete(id int64) error {
-	if _, err := r.GetById(id); err != nil {
-		return err
+	r.Lock()
+	defer r.Unlock()
+	if _, ok := r.M[id]; !ok {
+		return models.ErrIdNotFound
 	}
-	delete(r, id)
+	delete(r.M, id)
 	return nil
 }
