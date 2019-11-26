@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Appointment struct {
-	ID              int64          `json:"id"`
+	ID              int64          `json:"id" validate:"required"`
 	Summary         string         `json:"summary" validate:"required"`
 	Description     string         `json:"description"`
 	StartsAt        time.Time      `json:"starts_at"`

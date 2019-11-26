@@ -40,6 +40,7 @@ func init() {
 		"config.yaml", "config file (default is ./config.yaml)")
 
 	rootCmd.AddCommand(helloCmd)
+	rootCmd.AddCommand(apiCmd)
 }
 
 // initConfig reads in config file and ENV variables if set.
