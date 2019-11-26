@@ -39,7 +39,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config",
 		"config.yaml", "config file (default is ./config.yaml)")
 
-	rootCmd.AddCommand(helloCmd)
 	rootCmd.AddCommand(apiCmd)
 }
 
