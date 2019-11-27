@@ -20,25 +20,22 @@ type AppointmentsList struct {
 	Appointments []*models.Appointment `json:"result"`
 }
 
-type successBody struct {
-	Result interface{} `json:"result"`
+type responseBody struct {
+	Result interface{} `json:"result,omitempty"`
+	Error string `json:"error,omitempty"`
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, result interface{}) {
-	body := &successBody{Result: result}
+	body := &responseBody{Result: result}
 	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
 		handleError(w, r, 500, "json encoding error")
 	}
 }
 
-type errorBody struct {
-	Error string `json:"error"`
-}
-
 func handleError(w http.ResponseWriter, r *http.Request, code int, msg string) {
 	w.WriteHeader(code)
-	body := &errorBody{Error: msg}
+	body := &responseBody{Error: msg}
 	err := json.NewEncoder(w).Encode(body)
 	if err != nil {
 		panic(err)
