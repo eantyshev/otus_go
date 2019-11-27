@@ -2,8 +2,8 @@ package repository
 
 import (
 	"github.com/eantyshev/otus_go/calendar/pkg/appointment"
-	"time"
 	"sync"
+	"time"
 
 	"github.com/eantyshev/otus_go/calendar/pkg/models"
 )
@@ -19,7 +19,7 @@ func NewMapRepo() appointment.Repository {
 
 func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time.Time, error) {
 	var cnt = 0
-	var aps []*models.Appointment
+	var aps = make([]*models.Appointment, 0)
 	var timeEndMax time.Time
 	for _, ap := range r.M {
 		if ap.StartsAt.After(timeFrom) {
@@ -59,7 +59,11 @@ func (r mapRepo) GetById(id int64) (*models.Appointment, error) {
 func (r mapRepo) Update(ap *models.Appointment) error {
 	r.Lock()
 	defer r.Unlock()
-	r.M[ap.ID] = ap
+	if apOrig, ok := r.M[ap.ID]; ok {
+		*apOrig = *ap
+	} else {
+		return models.ErrIdNotFound
+	}
 	return nil
 }
 

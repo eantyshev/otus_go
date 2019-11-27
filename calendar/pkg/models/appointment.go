@@ -7,7 +7,7 @@ type Appointment struct {
 	Summary         string         `json:"summary" validate:"required"`
 	Description     string         `json:"description"`
 	StartsAt        time.Time      `json:"starts_at"`
-	DurationMinutes uint16         `json:"duration_minutes"`
-	IsRegular       bool           `json:"is_regular"`
-	DaysOfWeek      []time.Weekday `json:"days_of_week"`
+	DurationMinutes uint16         `json:"duration_minutes,omitempty"`
+	IsRegular       bool           `json:"is_regular,omitempty"`
+	DaysOfWeek      []time.Weekday `json:"days_of_week,omitempty"`
 }
