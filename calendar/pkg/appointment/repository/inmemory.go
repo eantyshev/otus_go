@@ -21,6 +21,8 @@ func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time
 	var cnt = 0
 	var aps = make([]*models.Appointment, 0)
 	var timeEndMax time.Time
+	r.RLock()
+	defer r.RUnlock()
 	for _, ap := range r.M {
 		if ap.StartsAt.After(timeFrom) {
 			aps = append(aps, ap)
