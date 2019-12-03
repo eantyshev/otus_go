@@ -1,7 +1,6 @@
 package api
 
 import (
-
 	"encoding/json"
 	"fmt"
 	"github.com/eantyshev/otus_go/calendar/logger"
@@ -12,17 +11,13 @@ import (
 	"go.uber.org/zap"
 	"time"
 
-	"net/http"
 	"github.com/gorilla/mux"
+	"net/http"
 )
-
-type AppointmentsList struct {
-	Appointments []*models.Appointment `json:"result"`
-}
 
 type responseBody struct {
 	Result interface{} `json:"result,omitempty"`
-	Error string `json:"error,omitempty"`
+	Error  string      `json:"error,omitempty"`
 }
 
 func handleSuccess(w http.ResponseWriter, r *http.Request, result interface{}) {
@@ -43,7 +38,7 @@ func handleError(w http.ResponseWriter, r *http.Request, code int, msg string) {
 }
 
 func AccessLogMiddleware(l *zap.SugaredLogger, h http.HandlerFunc) http.HandlerFunc {
-	return func (w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		l.Infof("request to %s from %s", r.RequestURI, r.RemoteAddr)
 		h(w, r)
 	}
@@ -54,12 +49,10 @@ type MyHandler struct {
 	l    *zap.SugaredLogger
 }
 
-
 func (mh *MyHandler) CUDEvent(w http.ResponseWriter, r *http.Request) {
 	var (
-		ap *models.Appointment
-		err error
-		vars map[string]string = mux.Vars(r)
+		ap   *models.Appointment
+		err  error
 	)
 	if err = r.ParseForm(); err != nil {
 		handleError(w, r, 400, fmt.Sprintf("failed to parse form: %s", err))
@@ -69,7 +62,7 @@ func (mh *MyHandler) CUDEvent(w http.ResponseWriter, r *http.Request) {
 		handleError(w, r, 400, fmt.Sprintf("bad appointment data: %s", err))
 		return
 	}
-	switch vars["action"] {
+	switch action := mux.Vars(r)["action"]; action {
 	case "create":
 		if err := mh.repo.Store(ap); err != nil {
 			handleError(w, r, 500, fmt.Sprintf("cannot store appointment: %s", err))
@@ -86,7 +79,8 @@ func (mh *MyHandler) CUDEvent(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	default:
-		handleError(w, r, 500, "Not implemented")
+		handleError(w, r, 500, fmt.Sprintf("Action %s not implemented", action))
+		return
 	}
 	handleSuccess(w, r, "success")
 }
@@ -94,15 +88,15 @@ func (mh *MyHandler) CUDEvent(w http.ResponseWriter, r *http.Request) {
 func (mh *MyHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	var (
 		now, since time.Time
-		aps = make([]*models.Appointment, 0)
-		err error
+		aps        = make([]*models.Appointment, 0)
+		err        error
 	)
 	now = time.Now()
 	switch period := mux.Vars(r)["period"]; period {
 	case "day":
 		since = now.AddDate(0, 0, -1)
 	case "week":
-		since = now.AddDate(0, 0,-7 )
+		since = now.AddDate(0, 0, -7)
 	case "month":
 		since = now.AddDate(0, -1, 0)
 	default:
