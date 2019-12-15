@@ -2,38 +2,41 @@ package repository
 
 import (
 	"github.com/eantyshev/otus_go/calendar/pkg/appointment"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-
-	"github.com/eantyshev/otus_go/calendar/pkg/models"
 )
 
-var ap1 = models.Appointment{
-	ID:              1,
-	Summary:         "go seminar",
-	Description:     "awesome Go seminar",
-	StartsAt:        time.Date(2019, 10, 29, 17, 0, 0, 0, time.UTC),
-	DurationMinutes: 100,
-	IsRegular:       true,
-	DaysOfWeek:      []time.Weekday{time.Tuesday, time.Thursday},
+var (
+	uuid1 = uuid.MustParse("11112222333344445555666677778888")
+	uuid2 = uuid.MustParse("11112222333344445555666677779999")
+)
+
+var ap1 = appointment.Appointment{
+	Uuid:        uuid1,
+	Summary:     "go seminar",
+	Description: "awesome Go seminar",
+	StartsAt:    time.Date(2019, 10, 29, 17, 0, 0, 0, time.UTC),
+	Duration:    100 * time.Minute,
+	Owner:       "user1",
 }
 
-var ap2 = models.Appointment{
-	ID:              2,
-	Summary:         "sleep time",
-	Description:     "wonderful dreams about programming Go",
-	StartsAt:        time.Date(2019, 10, 29, 20, 0, 0, 0, time.UTC),
-	DurationMinutes: 8 * 60,
-	IsRegular:       true,
+var ap2 = appointment.Appointment{
+	Uuid:        uuid2,
+	Summary:     "sleep time",
+	Description: "wonderful dreams about programming Go",
+	StartsAt:    time.Date(2019, 10, 29, 20, 0, 0, 0, time.UTC),
+	Duration:    8 * time.Hour,
+	Owner:       "user1",
 }
 
 func TestStore(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
+	var r Repository = NewMapRepo()
 	if err := r.Store(&ap1); err != nil {
 		t.Fatal(err)
 	}
-	if apStored, err := r.GetById(1); err != nil {
+	if apStored, err := r.GetById(uuid1); err != nil {
 		t.Fatal(err)
 	} else {
 		assert.Equal(t, *apStored, ap1)
@@ -41,18 +44,18 @@ func TestStore(t *testing.T) {
 }
 
 func TestStoreConflict(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
+	var r Repository = NewMapRepo()
 	if err := r.Store(&ap1); err != nil {
 		t.Fatal(err)
 	}
 	var apCopy = ap1
-	if err := r.Store(&apCopy); err != models.ErrConflictId {
+	if err := r.Store(&apCopy); err != appointment.ErrConflictId {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 }
 
 func TestUpdate(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
+	var r Repository = NewMapRepo()
 	if err := r.Store(&ap1); err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +64,7 @@ func TestUpdate(t *testing.T) {
 	if err := r.Update(&apCopy); err != nil {
 		t.Fatal(err)
 	}
-	if apStored, err := r.GetById(1); err != nil {
+	if apStored, err := r.GetById(uuid1); err != nil {
 		t.Fatal(err)
 	} else {
 		assert.Equal(t, *apStored, apCopy)
@@ -69,14 +72,14 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
-	if _, err := r.GetById(1); err != models.ErrIdNotFound {
+	var r Repository = NewMapRepo()
+	if _, err := r.GetById(uuid1); err != appointment.ErrIdNotFound {
 		t.Fatalf("Unexpected error: %s", err)
 	}
 }
 
 func TestFetch(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
+	var r Repository = NewMapRepo()
 	r.Store(&ap1)
 	r.Store(&ap2)
 	aps, timeEnd, err := r.Fetch(time.Date(2019, 10, 29, 0, 0, 0, 0, time.UTC), 2)
@@ -90,7 +93,7 @@ func TestFetch(t *testing.T) {
 }
 
 func TestFetchRepeat(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
+	var r Repository = NewMapRepo()
 	r.Store(&ap1)
 	r.Store(&ap2)
 	aps, timeEnd, err := r.Fetch(time.Date(2019, 10, 29, 0, 0, 0, 0, time.UTC), 1)
@@ -110,14 +113,14 @@ func TestFetchRepeat(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	var r appointment.Repository = NewMapRepo()
+	var r Repository = NewMapRepo()
 	if err := r.Store(&ap1); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.Delete(1); err != nil {
+	if err := r.Delete(uuid1); err != nil {
 		t.Fatal(err)
 	}
-	if err := r.Delete(1); err != models.ErrIdNotFound {
+	if err := r.Delete(uuid1); err != appointment.ErrIdNotFound {
 		t.Fatalf("Unexpected err: %s", err)
 	}
 }

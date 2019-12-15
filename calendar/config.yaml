@@ -1,3 +1,5 @@
-http_listen: "[::]:8080"
+http_listen: "[::]:50051"
 log_file: calendar.log
 log_level: debug
+client:
+  timeout: 1s

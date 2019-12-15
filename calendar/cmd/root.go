@@ -39,7 +39,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config",
 		"config.yaml", "config file (default is ./config.yaml)")
 
-	rootCmd.AddCommand(apiCmd)
+	rootCmd.AddCommand(rpcServerCmd)
+	rootCmd.AddCommand(rpcClientCmd)
+
+	rpcClientCmd.Flags().StringVarP(&Args.Uuid, "uuid","u", "", "uuid of appointment")
+	rpcClientCmd.Flags().StringVar(&Args.RequestJson, "request-json", "", "appointment info as json")
+	rpcClientCmd.Flags().StringVar(&Args.Owner, "owner", "", "owner identity")
+	rpcClientCmd.Flags().StringVar(&Args.Period, "period", "", "Period to list.")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -51,4 +57,7 @@ func initConfig() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	viper.SetEnvPrefix("calendar")
+	viper.AutomaticEnv()
 }

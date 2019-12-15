@@ -2,24 +2,23 @@ package repository
 
 import (
 	"github.com/eantyshev/otus_go/calendar/pkg/appointment"
+	"github.com/google/uuid"
 	"sync"
 	"time"
-
-	"github.com/eantyshev/otus_go/calendar/pkg/models"
 )
 
 type mapRepo struct {
 	sync.RWMutex
-	M map[int64]*models.Appointment
+	M map[uuid.UUID]*appointment.Appointment
 }
 
-func NewMapRepo() appointment.Repository {
-	return &mapRepo{M: make(map[int64]*models.Appointment)}
+func NewMapRepo() Repository {
+	return &mapRepo{M: make(map[uuid.UUID]*appointment.Appointment)}
 }
 
-func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time.Time, error) {
+func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*appointment.Appointment, time.Time, error) {
 	var cnt = 0
-	var aps = make([]*models.Appointment, 0)
+	var aps = make([]*appointment.Appointment, 0)
 	var timeEndMax time.Time
 	r.RLock()
 	defer r.RUnlock()
@@ -27,7 +26,7 @@ func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time
 		if ap.StartsAt.After(timeFrom) {
 			aps = append(aps, ap)
 			cnt++
-			timeEnd := ap.StartsAt.Add(time.Duration(ap.DurationMinutes) * time.Minute)
+			timeEnd := ap.StartsAt.Add(ap.Duration)
 			if timeEndMax.Before(timeEnd) {
 				timeEndMax = timeEnd
 			}
@@ -39,42 +38,42 @@ func (r mapRepo) Fetch(timeFrom time.Time, num int) ([]*models.Appointment, time
 	return aps, timeEndMax, nil
 }
 
-func (r mapRepo) Store(ap *models.Appointment) error {
+func (r mapRepo) Store(ap *appointment.Appointment) error {
 	r.Lock()
 	defer r.Unlock()
-	if _, ok := r.M[ap.ID]; ok {
-		return models.ErrConflictId
+	if _, ok := r.M[ap.Uuid]; ok {
+		return appointment.ErrConflictId
 	}
-	r.M[ap.ID] = ap
+	r.M[ap.Uuid] = ap
 	return nil
 }
 
-func (r mapRepo) GetById(id int64) (*models.Appointment, error) {
+func (r mapRepo) GetById(uuid uuid.UUID) (*appointment.Appointment, error) {
 	r.RLock()
 	defer r.RUnlock()
-	if ap, ok := r.M[id]; ok {
+	if ap, ok := r.M[uuid]; ok {
 		return ap, nil
 	}
-	return nil, models.ErrIdNotFound
+	return nil, appointment.ErrIdNotFound
 }
 
-func (r mapRepo) Update(ap *models.Appointment) error {
+func (r mapRepo) Update(ap *appointment.Appointment) error {
 	r.Lock()
 	defer r.Unlock()
-	if apOrig, ok := r.M[ap.ID]; ok {
+	if apOrig, ok := r.M[ap.Uuid]; ok {
 		*apOrig = *ap
 	} else {
-		return models.ErrIdNotFound
+		return appointment.ErrIdNotFound
 	}
 	return nil
 }
 
-func (r mapRepo) Delete(id int64) error {
+func (r mapRepo) Delete(uuid uuid.UUID) error {
 	r.Lock()
 	defer r.Unlock()
-	if _, ok := r.M[id]; !ok {
-		return models.ErrIdNotFound
+	if _, ok := r.M[uuid]; !ok {
+		return appointment.ErrIdNotFound
 	}
-	delete(r.M, id)
+	delete(r.M, uuid)
 	return nil
 }

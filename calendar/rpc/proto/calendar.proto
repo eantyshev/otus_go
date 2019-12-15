@@ -1,0 +1,50 @@
+syntax = "proto3";
+package adapters;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+
+message UUID {
+    string value = 1;
+}
+
+message AppointmentInfo {
+    string summary = 2;
+    string description = 3;
+    google.protobuf.Timestamp starts_at = 4;
+    google.protobuf.Duration duration = 5;
+    string owner = 6;
+}
+
+message Appointment {
+    UUID uuid = 1;
+    AppointmentInfo info = 2;
+}
+
+
+message ListRequest {
+    string owner = 1;
+    enum Period {
+        UNSPECIFIED = 0;
+        DAY = 1;
+        WEEK = 2;
+        MONTH = 3;
+    }
+    Period period = 2;
+}
+
+message ListResponse {
+    repeated Appointment appointments = 1;
+}
+
+service Calendar {
+    rpc CreateAppointment (AppointmentInfo) returns (Appointment) {
+    }
+    rpc UpdateAppointment (Appointment) returns (Appointment) {
+    }
+    rpc DeleteAppointment (UUID) returns (google.protobuf.Empty) {
+    }
+    rpc ListAppointments (ListRequest) returns (ListResponse) {
+    }
+}
