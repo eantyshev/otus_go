@@ -2,7 +2,6 @@ syntax = "proto3";
 package adapters;
 
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 
 message UUID {
@@ -12,8 +11,8 @@ message UUID {
 message AppointmentInfo {
     string summary = 2;
     string description = 3;
-    google.protobuf.Timestamp starts_at = 4;
-    google.protobuf.Duration duration = 5;
+    google.protobuf.Timestamp time_start = 4;
+    google.protobuf.Timestamp time_end = 5;
     string owner = 6;
 }
 
@@ -39,9 +38,9 @@ message ListResponse {
 }
 
 service Calendar {
-    rpc CreateAppointment (AppointmentInfo) returns (Appointment) {
+    rpc CreateAppointment (AppointmentInfo) returns (UUID) {
     }
-    rpc UpdateAppointment (Appointment) returns (Appointment) {
+    rpc UpdateAppointment (Appointment) returns (google.protobuf.Empty) {
     }
     rpc DeleteAppointment (UUID) returns (google.protobuf.Empty) {
     }

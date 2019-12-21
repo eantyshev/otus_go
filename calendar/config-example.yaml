@@ -1,0 +1,11 @@
+log_file: calendar.log
+log_level: debug
+http_listen: localhost:50051
+client:
+  timeout: 1s
+storage:
+  pg:
+    dsn: "host=localhost port=6432 user=calendar password=supersecret dbname=calendardb"
+rabbitmq:
+  amqp_host: localhost
+  amqp_port: 5672
