@@ -22,7 +22,10 @@ func ProtoToAppointment(pbAp *AppointmentInfo, pbUuid *UUID) (ap *ent.Appointmen
 	} else {
 		ap.Uuid = uuid.Must(uuid.NewRandom())
 	}
-	timeOptions := []struct{src *timestamp.Timestamp; dst *time.Time}{
+	timeOptions := []struct {
+		src *timestamp.Timestamp
+		dst *time.Time
+	}{
 		{pbAp.GetTimeStart(), &ap.TimeStart},
 		{pbAp.GetTimeEnd(), &ap.TimeEnd},
 	}

@@ -40,12 +40,6 @@ func init() {
 		"config.yaml", "config file (default is ./config.yaml)")
 
 	rootCmd.AddCommand(rpcServerCmd)
-	rootCmd.AddCommand(rpcClientCmd)
-
-	rpcClientCmd.Flags().StringVarP(&Args.Uuid, "uuid","u", "", "uuid of entity")
-	rpcClientCmd.Flags().StringVar(&Args.RequestJson, "request-json", "", "entity info as json")
-	rpcClientCmd.Flags().StringVar(&Args.Owner, "owner", "", "owner identity")
-	rpcClientCmd.Flags().StringVar(&Args.Period, "period", "", "Period to list.")
 }
 
 // initConfig reads in config file and ENV variables if set.

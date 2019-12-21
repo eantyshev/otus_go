@@ -112,7 +112,7 @@ func (pgr *PgRepo) ListOwnerPeriod(
 	owner string,
 	timeFrom time.Time,
 	timeTo time.Time,
-	) (aps []*ent.Appointment, err error) {
+) (aps []*ent.Appointment, err error) {
 	query := `SELECT uuid, summary, description, owner, time_start, time_end
 				FROM appointment
 				WHERE owner = $1 AND time_start >= $2 AND time_end <= $3`
@@ -136,4 +136,3 @@ func (pgr *PgRepo) ListOwnerPeriod(
 	}
 	return aps, nil
 }
-

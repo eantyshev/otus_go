@@ -110,7 +110,7 @@ func (cs *calendarService) ListAppointments(
 func newCalendarServer(repo interfaces.Repository) *calendarService {
 	return &calendarService{
 		usecases: &usecases.Usecases{Repo: repo, L: logger.L},
-		logger: logger.L,
+		logger:   logger.L,
 	}
 }
 

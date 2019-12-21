@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-
 type UsecasesInterface interface {
 	ListOwnerPeriod(ctx context.Context, owner string, timeFrom time.Time, timeTo time.Time) ([]*ent.Appointment, error)
 	Create(ctx context.Context, appointment *ent.Appointment) (*uuid.UUID, error)
@@ -33,7 +32,7 @@ func (uc *Usecases) ListOwnerPeriod(
 	owner string,
 	timeFrom time.Time,
 	timeTo time.Time,
-	) (aps []*ent.Appointment, err error) {
+) (aps []*ent.Appointment, err error) {
 	return uc.Repo.ListOwnerPeriod(ctx, owner, timeFrom, timeTo)
 }
 
