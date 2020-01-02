@@ -136,3 +136,29 @@ func (pgr *PgRepo) ListOwnerPeriod(
 	}
 	return aps, nil
 }
+
+func (pgr *PgRepo) FetchPeriod(
+	ctx context.Context,
+	timeFrom time.Time,
+	timeTo time.Time,
+) (aps []*ent.Appointment, err error) {
+	query := `SELECT uuid, summary, description, owner, time_start, time_end
+				FROM appointment
+				WHERE time_start >= $1 AND time_start < $2
+				ORDER BY time_start
+				`
+	rows, err := pgr.db.QueryContext(ctx, query, timeFrom, timeTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		ap := ent.Appointment{}
+		err = rows.Scan(&ap.Uuid, &ap.Summary, &ap.Description, &ap.Owner, &ap.TimeStart, &ap.TimeEnd)
+		if err != nil {
+			break
+		}
+		aps = append(aps, &ap)
+	}
+	return aps, err
+}

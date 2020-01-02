@@ -46,8 +46,10 @@ func ConfigureLogger() {
 
 	// configure log_file
 	logFile := viper.GetString("log_file")
-	cfg.OutputPaths = append(cfg.OutputPaths, logFile)
-	cfg.ErrorOutputPaths = append(cfg.ErrorOutputPaths, logFile)
+	if logFile != "" {
+		cfg.OutputPaths = append(cfg.OutputPaths, logFile)
+		cfg.ErrorOutputPaths = append(cfg.ErrorOutputPaths, logFile)
+	}
 	logger, err := cfg.Build()
 	if err != nil {
 		panic(err)

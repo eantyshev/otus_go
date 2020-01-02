@@ -1,0 +1,1 @@
+CREATE INDEX start_time_idx ON appointment (time_start);

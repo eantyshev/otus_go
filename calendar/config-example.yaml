@@ -7,5 +7,4 @@ storage:
   pg:
     dsn: "host=localhost port=6432 user=calendar password=supersecret dbname=calendardb"
 rabbitmq:
-  amqp_host: localhost
-  amqp_port: 5672
+  amqp_connection: amqp://localhost:5672/
