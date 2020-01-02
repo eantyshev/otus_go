@@ -3,6 +3,7 @@ package main
 import (
 	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters"
 	"github.com/eantyshev/otus_go/calendar/pkg/adapters/db"
+	"github.com/eantyshev/otus_go/calendar/pkg/config"
 	"github.com/eantyshev/otus_go/calendar/pkg/interfaces"
 	"github.com/eantyshev/otus_go/calendar/pkg/logger"
 	"github.com/eantyshev/otus_go/calendar/pkg/usecases"
@@ -38,5 +39,8 @@ func Server(addrPort string, pgDsn string) {
 }
 
 func main() {
-	Server(viper.GetString("grpc_listen"), viper.GetString("amqp_dsn"))
+	config.Configure()
+	grpcHostPort := viper.GetString("grpc_listen")
+	amqpDsn := viper.GetString("amqp_dsn")
+	Server(grpcHostPort, amqpDsn)
 }
