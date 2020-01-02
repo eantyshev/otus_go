@@ -3,31 +3,26 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"github.com/eantyshev/otus_go/calendar/logger"
 	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters"
-	"github.com/eantyshev/otus_go/calendar/pkg/adapters/db"
 	"github.com/eantyshev/otus_go/calendar/pkg/entity"
-	"github.com/eantyshev/otus_go/calendar/pkg/interfaces"
+	"github.com/eantyshev/otus_go/calendar/pkg/logger"
 	"github.com/eantyshev/otus_go/calendar/pkg/usecases"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net"
 	"time"
 )
 
-type calendarService struct {
-	usecases usecases.UsecasesInterface
-	logger   *zap.SugaredLogger
+type CalendarService struct {
+	Usecases usecases.UsecasesInterface
+	L        *zap.SugaredLogger
 }
 
 // implements pb.CalendarService
-func (cs *calendarService) CreateAppointment(
+func (cs *CalendarService) CreateAppointment(
 	ctx context.Context,
 	req *pb.AppointmentInfo,
 ) (uuid *pb.UUID, err error) {
@@ -40,14 +35,14 @@ func (cs *calendarService) CreateAppointment(
 	logger.L.Debug("create from proto:", s)
 	bs, _ := json.Marshal(ap)
 	logger.L.Debug("create from entity:", string(bs))
-	uid, err := cs.usecases.Create(ctx, ap)
+	uid, err := cs.Usecases.Create(ctx, ap)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &pb.UUID{Value: uid.String()}, nil
 }
 
-func (cs *calendarService) UpdateAppointment(
+func (cs *CalendarService) UpdateAppointment(
 	ctx context.Context,
 	req *pb.Appointment,
 ) (resp *empty.Empty, err error) {
@@ -56,13 +51,13 @@ func (cs *calendarService) UpdateAppointment(
 	if ap, err = pb.ProtoToAppointment(req.Info, req.Uuid); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if err := cs.usecases.Update(ctx, ap); err != nil {
+	if err := cs.Usecases.Update(ctx, ap); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return resp, nil
 }
 
-func (cs *calendarService) DeleteAppointment(
+func (cs *CalendarService) DeleteAppointment(
 	ctx context.Context,
 	pbUuid *pb.UUID,
 ) (resp *empty.Empty, err error) {
@@ -71,13 +66,13 @@ func (cs *calendarService) DeleteAppointment(
 	if id, err = uuid.Parse(pbUuid.Value); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	if err = cs.usecases.Delete(ctx, &id); err != nil {
+	if err = cs.Usecases.Delete(ctx, &id); err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	return resp, nil
 }
 
-func (cs *calendarService) ListAppointments(
+func (cs *CalendarService) ListAppointments(
 	ctx context.Context, req *pb.ListRequest,
 ) (resp *pb.ListResponse, err error) {
 	var since time.Time
@@ -91,13 +86,13 @@ func (cs *calendarService) ListAppointments(
 	case "MONTH":
 		since = now.AddDate(0, -1, 0)
 	}
-	if aps, err = cs.usecases.ListOwnerPeriod(ctx, req.Owner, since, now); err != nil {
+	if aps, err = cs.Usecases.ListOwnerPeriod(ctx, req.Owner, since, now); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp = &pb.ListResponse{
 		Appointments: make([]*pb.Appointment, len(aps)),
 	}
-	cs.logger.Debug("aps len ", len(aps))
+	cs.L.Debug("aps len ", len(aps))
 	for i, ap := range aps {
 		resp.Appointments[i], err = pb.AppointmentToProto(ap)
 		if err != nil {
@@ -105,28 +100,4 @@ func (cs *calendarService) ListAppointments(
 		}
 	}
 	return resp, nil
-}
-
-func newCalendarServer(repo interfaces.Repository) *calendarService {
-	return &calendarService{
-		usecases: &usecases.Usecases{Repo: repo, L: logger.L},
-		logger:   logger.L,
-	}
-}
-
-func Server(addrPort string, pgDsn string) {
-	repo, err := db.NewPgRepo(pgDsn)
-	if err != nil {
-		panic(err)
-	}
-	lis, err := net.Listen("tcp", addrPort)
-	if err != nil {
-		panic(err)
-	}
-	logger.L.Debugf("listening at %s", addrPort)
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(
-		grpc_zap.UnaryServerInterceptor(logger.L.Desugar()),
-	))
-	pb.RegisterCalendarServer(grpcServer, newCalendarServer(repo))
-	panic(grpcServer.Serve(lis))
 }
