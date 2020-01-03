@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/eantyshev/otus_go/calendar/pkg/config"
-	"github.com/eantyshev/otus_go/calendar/pkg/logger"
-	"github.com/eantyshev/otus_go/calendar/pkg/adapters/db"
-	"github.com/eantyshev/otus_go/calendar/pkg/interfaces"
+	"github.com/eantyshev/otus_go/calendar/internal/adapters/db"
+	"github.com/eantyshev/otus_go/calendar/internal/config"
+	"github.com/eantyshev/otus_go/calendar/internal/interfaces"
+	"github.com/eantyshev/otus_go/calendar/internal/logger"
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
@@ -60,6 +60,7 @@ func (s *Scheduler) PollNotifications(timeFrom, timeTo time.Time) {
 	aps, err := s.Repo.FetchPeriod(ctx, timeFrom, timeTo)
 	s.failOnError(err, "error fetching from db")
 	for _, ap := range aps {
+		s.L.Infow("publish notification", "time_start", ap.TimeStart, "owner", ap.Owner)
 		data, _ := json.Marshal(ap)
 		err = s.Channel.Publish(
 			"",
@@ -76,17 +77,17 @@ func (s *Scheduler) PollNotifications(timeFrom, timeTo time.Time) {
 
 func (s *Scheduler) PollForever() {
 	var timeFrom, timeTo time.Time
-	timeTo = time.Now()
+	timeTo = time.Now().UTC()
 	timeFrom = timeTo.Add(-Period)
 	pollOnce := func() {
-		timeTo = time.Now()
-		s.L.Debugf("from: %v, to: %v\n", timeFrom.Format(time.Stamp), timeTo.Format(time.Stamp))
+		timeTo = time.Now().UTC()
+		s.L.Debugf("from: %v, to: %v\n", timeFrom.Format(time.RFC3339), timeTo.Format(time.RFC3339))
 		s.PollNotifications(timeFrom, timeTo)
 		timeFrom = timeTo
 	}
-	timer := time.NewTicker(Period)
+	ticker := time.NewTicker(Period)
 	pollOnce()
-	for _ = range timer.C {
+	for _ = range ticker.C {
 		pollOnce()
 	}
 }

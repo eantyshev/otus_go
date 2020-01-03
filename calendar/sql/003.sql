@@ -1,0 +1,1 @@
+ALTER TABLE appointment ADD CONSTRAINT appointment_start_lte_end CHECK (time_start <= time_end);

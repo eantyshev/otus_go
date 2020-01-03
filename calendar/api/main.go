@@ -1,13 +1,13 @@
 package main
 
 import (
-	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters"
-	"github.com/eantyshev/otus_go/calendar/pkg/adapters/db"
-	"github.com/eantyshev/otus_go/calendar/pkg/config"
-	"github.com/eantyshev/otus_go/calendar/pkg/interfaces"
-	"github.com/eantyshev/otus_go/calendar/pkg/logger"
-	"github.com/eantyshev/otus_go/calendar/pkg/usecases"
-	"./server"
+	"github.com/eantyshev/otus_go/calendar/api/server"
+	pb "github.com/eantyshev/otus_go/calendar/internal/adapters"
+	"github.com/eantyshev/otus_go/calendar/internal/adapters/db"
+	"github.com/eantyshev/otus_go/calendar/internal/config"
+	"github.com/eantyshev/otus_go/calendar/internal/interfaces"
+	"github.com/eantyshev/otus_go/calendar/internal/logger"
+	"github.com/eantyshev/otus_go/calendar/internal/usecases"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -17,7 +17,7 @@ import (
 func newCalendarServer(repo interfaces.Repository) *server.CalendarService {
 	return &server.CalendarService{
 		Usecases: &usecases.Usecases{Repo: repo, L: logger.L},
-		L:   logger.L,
+		L:        logger.L,
 	}
 }
 
@@ -41,6 +41,6 @@ func Server(addrPort string, pgDsn string) {
 func main() {
 	config.Configure()
 	grpcHostPort := viper.GetString("grpc_listen")
-	amqpDsn := viper.GetString("amqp_dsn")
-	Server(grpcHostPort, amqpDsn)
+	pgDsn := viper.GetString("pg_dsn")
+	Server(grpcHostPort, pgDsn)
 }

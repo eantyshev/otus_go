@@ -5,40 +5,36 @@ from https://github.com/OtusTeam/Go/blob/master/project-calendar.md
 
 *Terminology warning: **event** is called **appointment** in this project*
 
-### Simple usage scenario: ###
-
-* Create an appointment (having the wall time equal to 2019-12-15T17:00)
-```
-$ cat appointment.json
-{
-  "owner": "eantyshev",
-  "summary": "The summary 5",
-  "description": "decription 5",
-  "starts_at": "2019-11-25T12:34:00Z",
-  "duration": "2h30m"
-}
-$ ./calendar rpc_client create --request-json appointment.json
-info	logging configured
-response:
-{"uuid":{"value":"dbbdcbad-dc94-4f86-a67d-f2b5b344fad8"},"info":{"summary":"The summary 5","description":"decription 5","startsAt":"2019-11-25T12:34:00Z","duration":"9000s","owner":"eantyshev"}}
+### GRPC client ###
+to explore the API please use Evans tool:
+```shell script
+evans --repl --host localhost --port 50051 --package adapters --service Calendar api/proto/calendar.proto
 ```
 
-* List the past month' appointments (day and week should yield nothing)
+## Setup
+### Build binaries
+```shell script
+$ make all
+go build -o calendar_api api/main.go
+go build -o calendar_scheduler scheduler/scheduler.go
+go build -o calendar_sender sender/sender.go
 ```
-$ ./calendar rpc_client list --owner eantyshev --period month
-info	logging configured
-response:
-{"appointments":[{"uuid":{"value":"dbbdcbad-dc94-4f86-a67d-f2b5b344fad8"},"info":{"summary":"The summary 5","description":"decription 5","startsAt":"2019-11-25T12:34:00Z","duration":"9000s","owner":"eantyshev"}}]}
-$ ./calendar rpc_client list --owner eantyshev --period day
-info	logging configured
-response:
-{}
+### Start processes
+```shell script
+$ ./calendar_api -c config.yaml
+$ ./calendar_scheduler -c config.yaml
+$ ./calendar_sender -c config.yaml
 ```
-* Update an existing appointment (shift the date up to the current):
+
+### Create an event and watch for notification
+```shell script
+debug	create from entity:{"uuid":"9549342b-a21e-47b6-b53e-d9d99fb4e8c2","summary":"summary","description":"descriprion","time_start":"2020-01-03T16:59:46Z","time_end":"2020-01-03T17:01:26Z","owner":"ea"}
+info	finished unary call with code OK	{"grpc.start_time": "2020-01-03T19:59:03+03:00", "system": "grpc", "span.kind": "server", "grpc.service": "adapters.Calendar", "grpc.method": "CreateAppointment", "grpc.code": "OK", "grpc.time_ms": 12.767999649047852}
+debug	from: 2020-01-03T16:58:07Z, to: 2020-01-03T16:59:07Z
+
+debug	from: 2020-01-03T16:59:07Z, to: 2020-01-03T17:00:07Z
+
+info	publish notification	{"time_start": "2020-01-03T16:59:46.000Z", "owner": "ea"}
+info	notification received	{"owner": "ea", "starts_at": "2020-01-03T16:59:46.000Z"}
+
 ```
-$ ./calendar rpc_client update --request-json appointment.json --uuid dbbdcbad-dc94-4f86-a67d-f2b5b344fad8
-info	logging configured
-response:
-{"uuid":{"value":"dbbdcbad-dc94-4f86-a67d-f2b5b344fad8"},"info":{"summary":"The summary 5","description":"decription 5","startsAt":"2019-12-15T12:34:00Z","duration":"9000s","owner":"eantyshev"}}
-```
-* This time listing for the day shows the appointment

@@ -2,8 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/eantyshev/otus_go/calendar/logger"
-	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
+	"github.com/eantyshev/otus_go/calendar/internal/config"
+	ent "github.com/eantyshev/otus_go/calendar/internal/entity"
+	"github.com/eantyshev/otus_go/calendar/internal/logger"
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
@@ -51,7 +52,7 @@ func (s *Sender) ConsumeForever() {
 		false,
 		false,
 		nil,
-		)
+	)
 	s.failOnError(err, "failed to consume")
 	for msg := range msgs {
 		ap := &ent.Appointment{}
@@ -60,8 +61,6 @@ func (s *Sender) ConsumeForever() {
 		s.L.Infow("notification received", "owner", ap.Owner, "starts_at", ap.TimeStart)
 	}
 }
-
-
 
 func main() {
 	config.Configure()

@@ -1,8 +1,12 @@
 
 gen:
 	PATH=$$PATH:~/go/bin protoc -I rpc/proto calendar.proto --go_out=plugins=grpc:pkg/adapters
-build:
-	go build -o calendar
-clean:
-	go clean -v
-.PHONY: gen clean build
+
+api:
+	go build -o calendar_api api/main.go
+scheduler:
+	go build -o calendar_scheduler scheduler/scheduler.go
+sender:
+	go build -o calendar_sender sender/sender.go
+all: api scheduler sender
+.PHONY: gen clean api scheduler sender all
