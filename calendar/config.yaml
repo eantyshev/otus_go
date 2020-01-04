@@ -1,0 +1,2 @@
+log_file: /var/log/calendar.log
+log_level: debug
