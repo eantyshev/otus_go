@@ -16,7 +16,7 @@ func init() {
 		"config file (default is ./config.yaml)")
 }
 
-func SetupViper() {
+func setupViper() {
 	viper.SetConfigFile(cfgFile)
 
 	// If a config file is found, read it in.
@@ -30,6 +30,7 @@ func SetupViper() {
 }
 
 func Configure() {
-	SetupViper()
+	flag.Parse()
+	setupViper()
 	logger2.ConfigureLogger()
 }

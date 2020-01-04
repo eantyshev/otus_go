@@ -13,4 +13,6 @@ RUN CGO_ENABLED=0 go build -o /opt/service/calendar_scheduler scheduler/schedule
 # Release
 FROM alpine:latest
 COPY --from=build-env /opt/service/calendar_scheduler /bin/calendar_scheduler
-ENTRYPOINT ["/bin/calendar_scheduler"]
+RUN mkdir /etc/calendar
+COPY config.yaml /etc/calendar/config.yaml
+ENTRYPOINT ["/bin/calendar_scheduler", "--config", "/etc/calendar/config.yaml"]

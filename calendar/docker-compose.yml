@@ -7,59 +7,72 @@ networks:
     driver: bridge
 
 services:
-  scheduler_service:
-    build: ./registration_service
+  grpc_api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     depends_on:
       - postgres
-      - notification_service
     restart: on-failure
     ports:
-      - "8088:8088"
-    expose:
-      - 8088
+      - "8888:50051"
     environment:
-      REG_SERVICE_DB_DSN: "postgres://test:test@postgres:5432/exampledb?sslmode=disable"
-      REG_SERVICE_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
-      REG_SERVICE_SERVER_ADDR: ":8088"
+      CALENDAR_PG_DSN: "host=postgres port=5432 user=calendar password=supersecret dbname=calendardb"
+      CALENDAR_GRPC_LISTEN: "0.0.0.0:50051"
+    networks:
+      - db
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: scheduler/Dockerfile
+    image: calendar_scheduler:latest
+    depends_on:
+      - postgres
+      - rabbit
+    restart: on-failure
+    environment:
+      CALENDAR_PG_DSN: "host=postgres port=5432 user=calendar password=supersecret dbname=calendardb"
+      CALENDAR_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
     networks:
       - rabbit
       - db
 
-  notification_service:
-    build: ./notification_service
+  sender:
+    build:
+      context: .
+      dockerfile: sender/Dockerfile
+    image: calendar_sender:latest
     depends_on:
       - rabbit
     restart: on-failure
     environment:
-      NOTIFY_SERVICE_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
+      CALENDAR_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
     networks:
       - rabbit
 
   postgres:
-    image: postgres:11.1
+    image: postgres:12-alpine
     ports:
-      - "5432:5432"
+      - "6432:5432"
     expose:
       - 5432
     environment:
-      POSTGRES_USER: test
-      POSTGRES_PASSWORD: test
-      POSTGRES_DB: exampledb
+      POSTGRES_USER: calendar
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: calendardb
     volumes:
       # https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh#L145
-      - ./setup.sql:/docker-entrypoint-initdb.d/setup.sql
+      - ./sql:/docker-entrypoint-initdb.d/
     networks:
       - db
 
   rabbit:
-    image: rabbitmq:3.7.17-management
+    image: rabbitmq:3-management
     ports:
       - "15672:15672"
       - "5672:5672"
     expose:
       - 15672
-    volumes:
-      - ./rabbit.def.json:/etc/rabbitmq/definitions.json:ro
-      - ./rabbit.config:/etc/rabbitmq/rabbitmq.config:ro
     networks:
       - rabbit
