@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/eantyshev/otus_go/calendar/internal/config"
-	ent "github.com/eantyshev/otus_go/calendar/internal/entity"
-	"github.com/eantyshev/otus_go/calendar/internal/logger"
+	"github.com/eantyshev/otus_go/calendar/pkg/config"
+	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
+	"github.com/eantyshev/otus_go/calendar/pkg/logger"
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"

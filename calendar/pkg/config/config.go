@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	logger2 "github.com/eantyshev/otus_go/calendar/internal/logger"
+	logger2 "github.com/eantyshev/otus_go/calendar/pkg/logger"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"os"

@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/eantyshev/otus_go/calendar/api/server"
-	pb "github.com/eantyshev/otus_go/calendar/internal/adapters"
-	"github.com/eantyshev/otus_go/calendar/internal/adapters/db"
-	"github.com/eantyshev/otus_go/calendar/internal/config"
-	"github.com/eantyshev/otus_go/calendar/internal/interfaces"
-	"github.com/eantyshev/otus_go/calendar/internal/logger"
-	"github.com/eantyshev/otus_go/calendar/internal/usecases"
+	"github.com/eantyshev/otus_go/calendar/pkg/adapters/db"
+	grpc2 "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
+	"github.com/eantyshev/otus_go/calendar/pkg/config"
+	"github.com/eantyshev/otus_go/calendar/pkg/interfaces"
+	"github.com/eantyshev/otus_go/calendar/pkg/logger"
+	"github.com/eantyshev/otus_go/calendar/pkg/usecases"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -34,7 +34,7 @@ func Server(addrPort string, pgDsn string) {
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(
 		grpc_zap.UnaryServerInterceptor(logger.L.Desugar()),
 	))
-	pb.RegisterCalendarServer(grpcServer, newCalendarServer(repo))
+	grpc2.RegisterCalendarServer(grpcServer, newCalendarServer(repo))
 	panic(grpcServer.Serve(lis))
 }
 

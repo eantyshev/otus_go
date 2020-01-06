@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/eantyshev/otus_go/calendar/internal/entity"
+	"github.com/eantyshev/otus_go/calendar/pkg/entity"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/stdlib"
 	"time"

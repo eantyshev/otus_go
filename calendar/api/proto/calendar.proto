@@ -1,5 +1,5 @@
 syntax = "proto3";
-package adapters;
+package protobuf;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";

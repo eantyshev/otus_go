@@ -2,7 +2,7 @@ package interfaces
 
 import (
 	"context"
-	"github.com/eantyshev/otus_go/calendar/internal/entity"
+	"github.com/eantyshev/otus_go/calendar/pkg/entity"
 	"github.com/google/uuid"
 	"time"
 )

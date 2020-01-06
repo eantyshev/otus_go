@@ -2,8 +2,8 @@ package usecases
 
 import (
 	"context"
-	"github.com/eantyshev/otus_go/calendar/internal/entity"
-	interfaces2 "github.com/eantyshev/otus_go/calendar/internal/interfaces"
+	"github.com/eantyshev/otus_go/calendar/pkg/entity"
+	interfaces2 "github.com/eantyshev/otus_go/calendar/pkg/interfaces"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"time"

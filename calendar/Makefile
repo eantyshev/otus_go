@@ -1,6 +1,6 @@
 
 gen:
-	PATH=$$PATH:~/go/bin protoc -I rpc/proto calendar.proto --go_out=plugins=grpc:pkg/adapters
+	PATH=$$PATH:~/go/bin protoc -I api/proto calendar.proto --go_out=plugins=grpc:internal/adapters/protobuf
 
 api:
 	go build -o calendar_api api/main.go

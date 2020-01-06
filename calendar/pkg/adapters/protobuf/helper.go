@@ -1,8 +1,8 @@
-package adapters
+package protobuf
 
 import (
 	"fmt"
-	"github.com/eantyshev/otus_go/calendar/internal/entity"
+	"github.com/eantyshev/otus_go/calendar/pkg/entity"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/uuid"
