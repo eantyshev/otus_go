@@ -21,6 +21,8 @@ type CalendarService struct {
 	L        *zap.SugaredLogger
 }
 
+//var _ CalendarService = (pb.CalendarServer)(nil)
+
 // implements pb.CalendarService
 func (cs *CalendarService) CreateAppointment(
 	ctx context.Context,
@@ -100,4 +102,18 @@ func (cs *CalendarService) ListAppointments(
 		}
 	}
 	return resp, nil
+}
+
+func (cs *CalendarService) GetAppointment(
+	ctx context.Context, pbUuid *pb.UUID,
+) (pbAp *pb.Appointment, err error) {
+	uid := uuid.MustParse(pbUuid.Value)
+	ap, err := cs.Usecases.GetById(ctx, &uid)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if pbAp, err = pb.AppointmentToProto(ap); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return pbAp, nil
 }

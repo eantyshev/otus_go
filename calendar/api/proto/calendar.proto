@@ -46,4 +46,6 @@ service Calendar {
     }
     rpc ListAppointments (ListRequest) returns (ListResponse) {
     }
+    rpc GetAppointment (UUID) returns (Appointment) {
+    }
 }

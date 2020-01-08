@@ -10,19 +10,19 @@ Feature: CRUD operations on appointments
     And the response contains the generated id
 
   Scenario: Appointment is shown by its UUID
-    Given appointment with id "UUID" registered
-    When I send GetById request for id "UUID"
+    Given some appointment is registered
+    When I send GetById request for given id
     Then I receive the valid properties
 
   Scenario: Delete appointment
-    Given appointment with id "UUID" exists
-    When I send Delete request for id "UUID"
-    And I send GetById request for id "UUID"
+    Given some appointment is registered
+    When I send Delete request for given id
+    And I send GetById request for given id
     Then it returns ErrNoSuchId
 
   Scenario: Update an existing appointment
-    Given appointment with id "UUID" exists
+    Given some appointment is registered
     When provide another owner "Mr.Who"
-    And I send Update request for id "UUID"
-    Then appointment's owner should be updated
+    And I send Update request for given id
+    Then appointment's owner is "Mr.Who"
     But other properies are not
