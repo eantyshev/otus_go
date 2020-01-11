@@ -8,6 +8,7 @@ import (
 	"github.com/eantyshev/otus_go/calendar/pkg/logger"
 	"github.com/eantyshev/otus_go/calendar/pkg/usecases"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -77,18 +78,20 @@ func (cs *CalendarService) DeleteAppointment(
 func (cs *CalendarService) ListAppointments(
 	ctx context.Context, req *pb.ListRequest,
 ) (resp *pb.ListResponse, err error) {
-	var since time.Time
+	var from, until time.Time
 	var aps []*appointment.Appointment
-	now := time.Now()
+	if from, err = ptypes.Timestamp(req.TimeStart); err != nil {
+		return nil, err
+	}
 	switch req.Period.String() {
 	case "DAY":
-		since = now.AddDate(0, 0, -1)
+		until = from.AddDate(0, 0, 1)
 	case "WEEK":
-		since = now.AddDate(0, 0, -7)
+		until = from.AddDate(0, 0, 7)
 	case "MONTH":
-		since = now.AddDate(0, -1, 0)
+		until = from.AddDate(0, 1, 0)
 	}
-	if aps, err = cs.Usecases.ListOwnerPeriod(ctx, req.Owner, since, now); err != nil {
+	if aps, err = cs.Usecases.ListOwnerPeriod(ctx, req.Owner, from, until); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp = &pb.ListResponse{

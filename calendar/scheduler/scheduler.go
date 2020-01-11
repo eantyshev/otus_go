@@ -38,8 +38,24 @@ func (s *Scheduler) failOnError(err error, msg string) {
 	}
 }
 
+func (s *Scheduler) waitConnect(amqpCreds string, timeout, retryPeriod time.Duration) (conn *amqp.Connection, err error) {
+	deadline := time.Now().Add(timeout)
+	for deadline.After(time.Now()) {
+		if conn, err = amqp.Dial(amqpCreds); err == nil {
+			return
+		}
+		s.L.Debug(err)
+		time.Sleep(retryPeriod)
+	}
+	return
+}
+
 func (s *Scheduler) SetupAmqp(amqpCreds string) {
-	conn, err := amqp.Dial(amqpCreds)
+	conn, err := s.waitConnect(
+		amqpCreds,
+		20*time.Second,
+		2*time.Second,
+	)
 	s.failOnError(err, "failed to connect rabbitmq")
 	s.Channel, err = conn.Channel()
 	s.failOnError(err, "failed to open a channel")

@@ -31,6 +31,7 @@ message ListRequest {
         MONTH = 3;
     }
     Period period = 2;
+    google.protobuf.Timestamp time_start = 3;
 }
 
 message ListResponse {

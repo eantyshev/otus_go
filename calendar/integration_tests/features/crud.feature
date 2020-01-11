@@ -18,11 +18,12 @@ Feature: CRUD operations on appointments
     Given some appointment is registered
     When I send Delete request for given id
     And I send GetById request for given id
-    Then it returns ErrNoSuchId
+    Then it fails with message "ID is not found"
 
   Scenario: Update an existing appointment
     Given some appointment is registered
     When provide another owner "Mr.Who"
     And I send Update request for given id
+    And I send GetById request for given id
     Then appointment's owner is "Mr.Who"
     But other properies are not

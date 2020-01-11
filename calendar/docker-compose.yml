@@ -30,7 +30,6 @@ services:
     depends_on:
       - postgres
       - rabbit
-    restart: on-failure
     environment:
       CALENDAR_PG_DSN: "host=postgres port=5432 user=calendar password=supersecret dbname=calendardb"
       CALENDAR_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
@@ -45,7 +44,6 @@ services:
     image: calendar_sender:latest
     depends_on:
       - rabbit
-    restart: on-failure
     environment:
       CALENDAR_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
     networks:
