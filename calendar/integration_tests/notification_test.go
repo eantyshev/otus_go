@@ -15,17 +15,11 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var amqpDSN = os.Getenv("TESTS_AMQP_DSN")
-
-func init() {
-	if amqpDSN == "" {
-		amqpDSN = "amqp://guest:guest@localhost:5672/"
-	}
-}
+var amqpDSN = os.Getenv("CALENDAR_AMQP_DSN")
 
 const (
 	queueName                 = "calendar.notification"
-	notificationsExchangeName = ""
+	notificationsExchangeName = "calendar.exchange"
 )
 
 type notifyTest struct {
@@ -34,16 +28,8 @@ type notifyTest struct {
 	messages      [][]byte
 	messagesMutex *sync.RWMutex
 	stopSignal    chan struct{}
-
-	responseStatusCode int
-	responseBody       []byte
 }
 
-func panicOnErr(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
 
 func (test *notifyTest) startConsuming(interface{}) {
 	test.messages = make([][]byte, 0)
@@ -170,4 +156,17 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I receive event with text "([^"]*)"$`, test.iReceiveEventWithText)
 
 	s.AfterScenario(test.stopConsuming)
+}
+
+func appointmentHasStartTimeAtNowSeconds(arg1 int) error {
+	return godog.ErrPending
+}
+
+func notificationIsReceivedWithinSeconds(arg1 int) error {
+	return godog.ErrPending
+}
+
+func FeatureContext(s *godog.Suite) {
+	s.Step(`^appointment has start time at now \+ (\d+) seconds$`, appointmentHasStartTimeAtNowSeconds)
+	s.Step(`^notification is received within (\d+) seconds$`, notificationIsReceivedWithinSeconds)
 }

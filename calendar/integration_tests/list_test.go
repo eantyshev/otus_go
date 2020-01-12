@@ -2,22 +2,22 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
 	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc"
 	"time"
 )
 
 type listTest struct {
-	cc        pb.CalendarClient
-	conn      *grpc.ClientConn
-	ctx       context.Context
-	timeNow time.Time
-	createdIds []string
-	lastErr error
-	newOwner string
+	cc                          pb.CalendarClient
+	conn                        *grpc.ClientConn
+	ctx                         context.Context
+	timeNow                     time.Time
+	createdIds, listedSummaries []string
 }
 
 func (test *listTest) initClient(interface{}) {
@@ -71,16 +71,51 @@ func (test *listTest) appointmentOwnedByStartsAt(summary, owner, starts_at strin
 	return nil
 }
 
-func iListAppointmentsForForPeriod(arg1, arg2 string) error {
-	return godog.ErrPending
+func (test *listTest) iListAppointmentsForForPeriod(owner, period string) (err error) {
+	req := &pb.ListRequest{
+		Owner: owner,
+	}
+	switch period {
+	case "day": req.Period = pb.ListRequest_DAY
+	case "week": req.Period = pb.ListRequest_WEEK
+	case "month": req.Period = pb.ListRequest_MONTH
+	}
+	req.TimeStart, err = ptypes.TimestampProto(test.timeNow)
+	panicOnErr(err)
+	pbAps, err := test.cc.ListAppointments(test.ctx, req)
+	if err != nil {
+		return err
+	}
+	for _, pbAp := range pbAps.Appointments {
+		test.listedSummaries = append(test.listedSummaries, pbAp.Info.Summary)
+	}
+	return nil
 }
 
-func appointmentIsListed(arg1 string) error {
-	return godog.ErrPending
+func (test *listTest) appointmentIsListed(summary string) error {
+	var (
+		updatedSummaries []string
+		isFound bool
+	)
+	for _, s := range test.listedSummaries {
+		if s == summary {
+			isFound = true
+		} else {
+			updatedSummaries = append(updatedSummaries, s)
+		}
+	}
+	test.listedSummaries = updatedSummaries
+	if isFound {
+		return nil
+	}
+	return fmt.Errorf("appointment %s is not listed", summary)
 }
 
-func noOtherAppointmentsAreListed() error {
-	return godog.ErrPending
+func (test *listTest) noOtherAppointmentsAreListed() error {
+	if len(test.listedSummaries) > 0 {
+		return fmt.Errorf("other appointments are listed: %s", test.listedSummaries)
+	}
+	return nil
 }
 
 func ListFeatureContext(s *godog.Suite) {
@@ -89,9 +124,9 @@ func ListFeatureContext(s *godog.Suite) {
 
 	s.Step(`^the wall time is "([^"]*)"$`, test.theWallTimeIs)
 	s.Step(`^appointment "([^"]*)" owned by "([^"]*)" starts at "([^"]*)"$`, test.appointmentOwnedByStartsAt)
-	s.Step(`^I list appointments for "([^"]*)" for "([^"]*)" period$`, iListAppointmentsForForPeriod)
-	s.Step(`^appointment "([^"]*)" is listed$`, appointmentIsListed)
-	s.Step(`^no other appointments are listed$`, noOtherAppointmentsAreListed)
+	s.Step(`^I list appointments for "([^"]*)" for "([^"]*)" period$`, test.iListAppointmentsForForPeriod)
+	s.Step(`^appointment "([^"]*)" is listed$`, test.appointmentIsListed)
+	s.Step(`^no other appointments are listed$`, test.noOtherAppointmentsAreListed)
 
 	s.AfterScenario(test.tearDownScenario)
 	s.AfterFeature(test.stopClient)
