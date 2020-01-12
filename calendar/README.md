@@ -16,3 +16,7 @@ to explore the API please use Evans tool:
 evans --repl --host localhost --port 8888 --package adapters --service Calendar api/proto/calendar.proto
 ```
 
+### Integration tests
+```shell script
+$ docker-compose -f docker-compose.test.yml up --exit-code-from integration_tests
+```
