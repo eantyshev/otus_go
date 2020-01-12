@@ -1,0 +1,75 @@
+version: "3"
+
+networks:
+  rabbit:
+    driver: bridge
+  db:
+    driver: bridge
+  api:
+    driver: bridge
+
+services:
+  integration_tests:
+    build: ./integration_tests
+#    command: "true"
+    depends_on:
+      - grpc_api
+      - scheduler
+    environment:
+      CALENDAR_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
+    networks:
+      - rabbit
+      - api
+
+  grpc_api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    depends_on:
+      - postgres
+    restart: on-failure
+    environment:
+      CALENDAR_PG_DSN: "host=postgres port=5432 user=calendar password=supersecret dbname=calendardb"
+      CALENDAR_GRPC_LISTEN: "0.0.0.0:50051"
+    networks:
+      - db
+      - api
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: scheduler/Dockerfile
+    image: calendar_scheduler:latest
+    depends_on:
+      - postgres
+      - rabbit
+    environment:
+      CALENDAR_PG_DSN: "host=postgres port=5432 user=calendar password=supersecret dbname=calendardb"
+      CALENDAR_AMQP_DSN: "amqp://guest:guest@rabbit:5672/"
+    networks:
+      - rabbit
+      - db
+
+  postgres:
+    image: postgres:12-alpine
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: calendar
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: calendardb
+    volumes:
+      # https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh#L145
+      - ./sql:/docker-entrypoint-initdb.d/
+    networks:
+      - db
+
+  rabbit:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    expose:
+      - 15672
+    networks:
+      - rabbit

@@ -41,17 +41,18 @@ type crudTest struct {
 
 func (test *crudTest) initClient(interface{}) {
 	var err error
-	// set global deadline to +10min
-	deadline := time.Now().Add(10 * time.Minute)
+	// set global deadline to +1min
+	deadline := time.Now().Add(1 * time.Minute)
 	test.ctx, test.cancel = context.WithDeadline(context.Background(), deadline)
-	test.conn, err = grpc.DialContext(test.ctx, "localhost:8888", grpc.WithInsecure(), grpc.WithBlock())
+	test.conn, err = grpc.DialContext(test.ctx, "grpc_api:50051", grpc.WithInsecure(), grpc.WithBlock())
 	panicOnErr(err)
 	test.cc = pb.NewCalendarClient(test.conn)
 }
 
 func (test *crudTest) stopClient(feature *gherkin.Feature) {
-	test.cancel()
-	panicOnErr(test.conn.Close())
+	if test.conn != nil {
+		panicOnErr(test.conn.Close())
+	}
 }
 
 func (test *crudTest) iSendCreateRequest() error {

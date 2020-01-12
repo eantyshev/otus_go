@@ -25,13 +25,15 @@ func (test *listTest) initClient(interface{}) {
 	// set global deadline to +10min
 	deadline := time.Now().Add(10 * time.Minute)
 	test.ctx, _ = context.WithDeadline(context.Background(), deadline)
-	test.conn, err = grpc.DialContext(test.ctx, "localhost:8888", grpc.WithInsecure(), grpc.WithBlock())
+	test.conn, err = grpc.DialContext(test.ctx, "grpc_api:50051", grpc.WithInsecure(), grpc.WithBlock())
 	panicOnErr(err)
 	test.cc = pb.NewCalendarClient(test.conn)
 }
 
 func (test *listTest) stopClient(feature *gherkin.Feature) {
-	panicOnErr(test.conn.Close())
+	if test.conn != nil {
+		panicOnErr(test.conn.Close())
+	}
 }
 
 func (test *listTest) tearDownScenario(interface{}, error) {

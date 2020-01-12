@@ -1,38 +1,95 @@
 package main
 
 import (
-	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"github.com/DATA-DOG/godog/gherkin"
+	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
+	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
+	"google.golang.org/grpc"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
 	"github.com/streadway/amqp"
 )
 
 var amqpDSN = os.Getenv("CALENDAR_AMQP_DSN")
 
+func init () {
+	if amqpDSN == "" {
+		amqpDSN = "amqp://guest:guest@localhost:5672/"
+	}
+}
+
 const (
-	queueName                 = "calendar.notification"
-	notificationsExchangeName = "calendar.exchange"
+	amqpQueue    = "calendar.notification"
+	amqpConsumer = "calendar.sender"
 )
+
+type grpcTest struct {
+	cc                          pb.CalendarClient
+	conn                        *grpc.ClientConn
+	ctx                         context.Context
+	timeNow                     time.Time
+	createdId string
+}
+
+func (test *grpcTest) initClient(interface{}) {
+	var err error
+	// set global deadline to +10min
+	deadline := time.Now().Add(10 * time.Minute)
+	test.ctx, _ = context.WithDeadline(context.Background(), deadline)
+	test.conn, err = grpc.DialContext(test.ctx, "grpc_api:50051", grpc.WithInsecure(), grpc.WithBlock())
+	panicOnErr(err)
+	test.cc = pb.NewCalendarClient(test.conn)
+}
+
+func (test *grpcTest) appointmentHasStartTimeAtNow() error {
+	p, err := pb.AppointmentToProto(&ent.Appointment{
+		Summary:     "summary",
+		Description: "descr.",
+		TimeStart:   time.Now(),
+		TimeEnd:     time.Now().Add(time.Hour),
+		Owner:       "owner",
+	})
+	if err != nil {
+		return err
+	}
+	resp, err := test.cc.CreateAppointment(test.ctx, p.Info)
+	if err != nil {
+		return err
+	}
+	test.createdId = resp.Value
+	return nil
+}
+
+func (test *grpcTest) stopClient(feature *gherkin.Feature) {
+	if test.conn != nil {
+		panicOnErr(test.conn.Close())
+	}
+}
+
+func (test *grpcTest) tearDownScenario(interface{}, error) {
+	if test.createdId != "" {
+		uid := pb.UUID{Value: test.createdId}
+		_, err := test.cc.DeleteAppointment(test.ctx, &uid)
+		panicOnErr(err)
+	}
+}
+
 
 type notifyTest struct {
 	conn          *amqp.Connection
 	ch            *amqp.Channel
-	messages      [][]byte
+	messages      []string
 	messagesMutex *sync.RWMutex
 	stopSignal    chan struct{}
 }
 
-
 func (test *notifyTest) startConsuming(interface{}) {
-	test.messages = make([][]byte, 0)
 	test.messagesMutex = new(sync.RWMutex)
 	test.stopSignal = make(chan struct{})
 
@@ -44,14 +101,8 @@ func (test *notifyTest) startConsuming(interface{}) {
 	test.ch, err = test.conn.Channel()
 	panicOnErr(err)
 
-	// Consume
-	_, err = test.ch.QueueDeclare(queueName, true, true, true, false, nil)
-	panicOnErr(err)
-
-	err = test.ch.QueueBind(queueName, "", notificationsExchangeName, false, nil)
-	panicOnErr(err)
-
-	events, err := test.ch.Consume(queueName, "", true, true, false, false, nil)
+	events, err := test.ch.Consume(amqpQueue, amqpConsumer,
+		true, false, false, false, nil)
 	panicOnErr(err)
 
 	go func(stop <-chan struct{}) {
@@ -60,8 +111,11 @@ func (test *notifyTest) startConsuming(interface{}) {
 			case <-stop:
 				return
 			case event := <-events:
+				ap := &ent.Appointment{}
+				err := json.Unmarshal(event.Body, ap)
+				panicOnErr(err)
 				test.messagesMutex.Lock()
-				test.messages = append(test.messages, event.Body)
+				test.messages = append(test.messages, ap.Summary)
 				test.messagesMutex.Unlock()
 			}
 		}
@@ -76,97 +130,33 @@ func (test *notifyTest) stopConsuming(interface{}, error) {
 	test.messages = nil
 }
 
-func (test *notifyTest) iSendRequestTo(httpMethod, addr string) (err error) {
-	var r *http.Response
-
-	switch httpMethod {
-	case http.MethodGet:
-		r, err = http.Get(addr)
-	default:
-		err = fmt.Errorf("unknown method: %s", httpMethod)
-	}
-
-	if err != nil {
-		return
-	}
-	test.responseStatusCode = r.StatusCode
-	test.responseBody, err = ioutil.ReadAll(r.Body)
-	return
-}
-
-func (test *notifyTest) theResponseCodeShouldBe(code int) error {
-	if test.responseStatusCode != code {
-		return fmt.Errorf("unexpected status code: %d != %d", test.responseStatusCode, code)
-	}
-	return nil
-}
-
-func (test *notifyTest) theResponseShouldMatchText(text string) error {
-	if string(test.responseBody) != text {
-		return fmt.Errorf("unexpected text: %s != %s", test.responseBody, text)
-	}
-	return nil
-}
-
-// Видим ярко выраженный DRY
-func (test *notifyTest) iSendRequestToWithData(httpMethod, addr, contentType string, data *gherkin.DocString) (err error) {
-	var r *http.Response
-
-	switch httpMethod {
-	case http.MethodPost:
-		replacer := strings.NewReplacer("\n", "", "\t", "")
-		cleanJson := replacer.Replace(data.Content)
-		r, err = http.Post(addr, contentType, bytes.NewReader([]byte(cleanJson)))
-	default:
-		err = fmt.Errorf("unknown method: %s", httpMethod)
-	}
-
-	if err != nil {
-		return
-	}
-	test.responseStatusCode = r.StatusCode
-	test.responseBody, err = ioutil.ReadAll(r.Body)
-	return
-}
-
-func (test *notifyTest) iReceiveEventWithText(text string) error {
-	time.Sleep(3 * time.Second) // На всякий случай ждём обработки евента
+func (test *notifyTest) notificationIsReceivedWithinSeconds(timeoutSec int) error {
+	time.Sleep(time.Duration(timeoutSec) * time.Second) // На всякий случай ждём обработки евента
 
 	test.messagesMutex.RLock()
 	defer test.messagesMutex.RUnlock()
 
 	for _, msg := range test.messages {
-		if string(msg) == text {
+		if msg == "summary" {
 			return nil
 		}
 	}
-	return fmt.Errorf("event with text '%s' was not found in %s", text, test.messages)
+	return fmt.Errorf("notification wasn't received: %s", test.messages)
 }
 
-func FeatureContext(s *godog.Suite) {
-	test := new(notifyTest)
 
-	s.BeforeScenario(test.startConsuming)
 
-	s.Step(`^I send "([^"]*)" request to "([^"]*)"$`, test.iSendRequestTo)
-	s.Step(`^The response code should be (\d+)$`, test.theResponseCodeShouldBe)
-	s.Step(`^The response should match text "([^"]*)"$`, test.theResponseShouldMatchText)
+func NotifyFeatureContext(s *godog.Suite) {
+	ntest := new(notifyTest)
+	gtest := new(grpcTest)
+	s.BeforeScenario(gtest.initClient)
+	s.BeforeScenario(ntest.startConsuming)
 
-	s.Step(`^I send "([^"]*)" request to "([^"]*)" with "([^"]*)" data:$`, test.iSendRequestToWithData)
-	s.Step(`^I receive event with text "([^"]*)"$`, test.iReceiveEventWithText)
+	s.Step(`^appointment has start time at now$`, gtest.appointmentHasStartTimeAtNow)
+	s.Step(`^notification is received within (\d+) seconds$`, ntest.notificationIsReceivedWithinSeconds)
 
-	s.AfterScenario(test.stopConsuming)
+	s.AfterScenario(ntest.stopConsuming)
+	s.AfterScenario(gtest.tearDownScenario)
+	s.AfterFeature(gtest.stopClient)
 }
 
-func appointmentHasStartTimeAtNowSeconds(arg1 int) error {
-	return godog.ErrPending
-}
-
-func notificationIsReceivedWithinSeconds(arg1 int) error {
-	return godog.ErrPending
-}
-
-func FeatureContext(s *godog.Suite) {
-	s.Step(`^appointment has start time at now \+ (\d+) seconds$`, appointmentHasStartTimeAtNowSeconds)
-	s.Step(`^notification is received within (\d+) seconds$`, notificationIsReceivedWithinSeconds)
-}
