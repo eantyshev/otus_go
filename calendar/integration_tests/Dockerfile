@@ -1,5 +1,5 @@
 # Environment
-FROM golang:1.12.9
+FROM golang:1.13.3
 
 RUN mkdir -p /opt/calendar_tests
 WORKDIR /opt/calendar_tests
@@ -8,6 +8,6 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
-RUN go get github.com/DATA-DOG/godog/cmd/godog
+RUN go get github.com/cucumber/godog/cmd/godog
 
 CMD godog

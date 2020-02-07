@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
+	"time"
+
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/gherkin"
 	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
 	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 var exampleOwner = "Mr.EA"
@@ -34,9 +35,9 @@ type crudTest struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	createdId string
-	foundAp *ent.Appointment
-	lastErr error
-	newOwner string
+	foundAp   *ent.Appointment
+	lastErr   error
+	newOwner  string
 }
 
 func (test *crudTest) initClient(interface{}) {

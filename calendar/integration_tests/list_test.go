@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
+	"time"
+
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/gherkin"
 	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
 	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc"
-	"time"
 )
 
 type listTest struct {
@@ -56,10 +57,10 @@ func (test *listTest) appointmentOwnedByStartsAt(summary, owner, starts_at strin
 		return err
 	}
 	ap := ent.Appointment{
-		Summary:     summary,
-		TimeStart:   timeStart,
-		TimeEnd:     timeStart.Add(time.Hour),
-		Owner:       owner,
+		Summary:   summary,
+		TimeStart: timeStart,
+		TimeEnd:   timeStart.Add(time.Hour),
+		Owner:     owner,
 	}
 	pbAp, err := pb.AppointmentToProto(&ap)
 	if err != nil {
@@ -78,9 +79,12 @@ func (test *listTest) iListAppointmentsForForPeriod(owner, period string) (err e
 		Owner: owner,
 	}
 	switch period {
-	case "day": req.Period = pb.ListRequest_DAY
-	case "week": req.Period = pb.ListRequest_WEEK
-	case "month": req.Period = pb.ListRequest_MONTH
+	case "day":
+		req.Period = pb.ListRequest_DAY
+	case "week":
+		req.Period = pb.ListRequest_WEEK
+	case "month":
+		req.Period = pb.ListRequest_MONTH
 	}
 	req.TimeStart, err = ptypes.TimestampProto(test.timeNow)
 	panicOnErr(err)
@@ -97,7 +101,7 @@ func (test *listTest) iListAppointmentsForForPeriod(owner, period string) (err e
 func (test *listTest) appointmentIsListed(summary string) error {
 	var (
 		updatedSummaries []string
-		isFound bool
+		isFound          bool
 	)
 	for _, s := range test.listedSummaries {
 		if s == summary {
@@ -133,4 +137,3 @@ func ListFeatureContext(s *godog.Suite) {
 	s.AfterScenario(test.tearDownScenario)
 	s.AfterFeature(test.stopClient)
 }
-

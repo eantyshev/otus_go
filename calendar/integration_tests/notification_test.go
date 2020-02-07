@@ -4,21 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/DATA-DOG/godog/gherkin"
-	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
-	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
-	"google.golang.org/grpc"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/DATA-DOG/godog"
+	"github.com/cucumber/godog/gherkin"
+	pb "github.com/eantyshev/otus_go/calendar/pkg/adapters/protobuf"
+	ent "github.com/eantyshev/otus_go/calendar/pkg/entity"
+	"google.golang.org/grpc"
+
+	"github.com/cucumber/godog"
 	"github.com/streadway/amqp"
 )
 
 var amqpDSN = os.Getenv("CALENDAR_AMQP_DSN")
 
-func init () {
+func init() {
 	if amqpDSN == "" {
 		amqpDSN = "amqp://guest:guest@localhost:5672/"
 	}
@@ -30,10 +31,10 @@ const (
 )
 
 type grpcTest struct {
-	cc                          pb.CalendarClient
-	conn                        *grpc.ClientConn
-	ctx                         context.Context
-	timeNow                     time.Time
+	cc        pb.CalendarClient
+	conn      *grpc.ClientConn
+	ctx       context.Context
+	timeNow   time.Time
 	createdId string
 }
 
@@ -80,7 +81,6 @@ func (test *grpcTest) tearDownScenario(interface{}, error) {
 	}
 }
 
-
 type notifyTest struct {
 	conn          *amqp.Connection
 	ch            *amqp.Channel
@@ -90,12 +90,19 @@ type notifyTest struct {
 }
 
 func (test *notifyTest) startConsuming(interface{}) {
+
 	test.messagesMutex = new(sync.RWMutex)
 	test.stopSignal = make(chan struct{})
 
 	var err error
 
-	test.conn, err = amqp.Dial(amqpDSN)
+	test.conn, err = amqp.DialConfig(
+		amqpDSN,
+		amqp.Config{
+			Heartbeat: 10 * time.Second,
+			Locale:    "en_US",
+			Dial:      amqp.DefaultDial(60 * time.Second),
+		})
 	panicOnErr(err)
 
 	test.ch, err = test.conn.Channel()
@@ -144,8 +151,6 @@ func (test *notifyTest) notificationIsReceivedWithinSeconds(timeoutSec int) erro
 	return fmt.Errorf("notification wasn't received: %s", test.messages)
 }
 
-
-
 func NotifyFeatureContext(s *godog.Suite) {
 	ntest := new(notifyTest)
 	gtest := new(grpcTest)
@@ -159,4 +164,3 @@ func NotifyFeatureContext(s *godog.Suite) {
 	s.AfterScenario(gtest.tearDownScenario)
 	s.AfterFeature(gtest.stopClient)
 }
-

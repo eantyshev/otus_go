@@ -1,9 +1,9 @@
 module github.com/eantyshev/otus_go/calendar/integration_tests
 
-go 1.12
+go 1.13.3
 
 require (
-	github.com/DATA-DOG/godog v0.7.13
+	github.com/cucumber/godog v0.8.0
 	github.com/eantyshev/otus_go/calendar v0.0.0-20200111145607-8d3773d4c810
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1

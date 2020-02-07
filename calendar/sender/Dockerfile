@@ -1,5 +1,5 @@
 # Environment
-FROM golang:1.12.9 as build-env
+FROM golang:1.13.3 as build-env
 
 RUN mkdir -p /opt/calendar_sender
 WORKDIR /opt/calendar_sender

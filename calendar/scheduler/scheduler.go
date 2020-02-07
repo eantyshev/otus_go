@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/eantyshev/otus_go/calendar/pkg/adapters/db"
 	"github.com/eantyshev/otus_go/calendar/pkg/config"
 	"github.com/eantyshev/otus_go/calendar/pkg/interfaces"
@@ -10,7 +12,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
-	"time"
 )
 
 const (
@@ -53,7 +54,7 @@ func (s *Scheduler) waitConnect(amqpCreds string, timeout, retryPeriod time.Dura
 func (s *Scheduler) SetupAmqp(amqpCreds string) {
 	conn, err := s.waitConnect(
 		amqpCreds,
-		20*time.Second,
+		60*time.Second,
 		2*time.Second,
 	)
 	s.failOnError(err, "failed to connect rabbitmq")

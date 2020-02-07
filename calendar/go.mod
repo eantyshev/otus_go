@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/cockroachdb/apd v1.1.0 // indirect
+	github.com/cucumber/godog v0.8.0 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
